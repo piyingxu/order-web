@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+    <title>用户列表</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="../css/font.css">
+    <link rel="stylesheet" href="../css/xadmin.css">
+    <script type="text/javascript" src="../js/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="../js/layui/layui.all.js" charset="utf-8"></script>
+    <script type="text/javascript" src="../js/xadmin.js"></script>
+    <link id="layuicss-layer" rel="stylesheet" href="../css/layer.css" media="all">
+    <link rel="stylesheet" href="../js/layui/css/modules/layer/default/layer.css" media="all">
+</head>
+<body class="layui-anim layui-anim-fadein">
+    <div class="x-nav">
+      <span class="layui-breadcrumb">
+        <a>用户管理</a>
+        <a><cite>用户列表</cite></a>
+      </span>
+      <a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" href="javascript:location.replace(location.href);" title="刷新">
+        <i class="layui-icon" style="line-height:30px">ဂ</i></a>
+    </div>
+    <div class="x-body">
+      <div class="layui-row">
+        <div class="layui-form layui-col-md12 x-so">
+          <input id="phone" type="text" name="phone"  placeholder="手机号" autocomplete="off" class="layui-input">
+          <div class="layui-input-inline">
+            <select id="status" name="status">
+              <option value="">全部</option>
+              <option value="1">正常</option>
+              <option value="0">禁用</option>
+            </select>
+          </div>
+          <button id="searchBtn" data-type="reload" class="layui-btn"  lay-submit="" lay-filter="sreach"><i class="layui-icon">&#xe615;</i></button>
+        </div>
+      </div>
+      <xblock>
+       <button class="layui-btn" onclick="x_admin_show('添加用户','add.html',800,600)"><i class="layui-icon"></i>新增</button>
+      </xblock>
+      <table class="layui-hide" id="table1" lay-filter="tool1"></table>
+      <script type="text/html" id="bar1">
+		{{#  if(d.status == 1){ }}
+ 		<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">禁用</a>
+		{{#  }else{  }}
+		<a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="del">启用</a>
+		{{#  }  }}
+		</script>
+      </div>
+<script type="text/html" id="statusTpl">
+{{#  if(d.status == 1){ }}
+<span style="color: green;">正常</span>
+{{#  }else{  }}
+<span style="color: red;">禁用</span>
+{{#  }  }}
+</script>
+<script type="text/html" id="loginStatusTpl">
+{{#  if(d.loginStatus == 1){ }}
+<span style="color: green;">已登录</span>
+{{#  }else{  }}
+<span style="color: red;">未登录</span>
+{{#  }  }}
+</script>
+<script>
+      layui.use(['laydate', 'laypage', 'table'], function(){
+        var laydate = layui.laydate,
+        table = layui.table, //表格
+        laypage = layui.laypage; //分页
+        //执行一个 table 实例
+        table.render({
+          elem: '#table1'
+          ,height: 650
+          ,limit: 1
+          ,limits:[1]
+          ,url: '/ghana/order/manager/test' //数据接口
+          ,method:'post'
+          ,id:'table1'
+          ,page: true
+          ,cols: [
+           [
+            {field: 'phone', title: 'ID', width:'6%', sort: true, align:'center',fixed: 'left'}
+            ,{field: 'status', title: '姓名'}
+          ]
+          ]
+        });
+        $('#searchBtn').on('click', function(){
+        	var index = layer.msg('查询中，请稍候...',{icon: 16,time:false,shade:0});
+        	table.reload('table1', {
+    	        page: {
+    	          curr: 1 //重新从第 1 页开始
+    	        }
+    	        ,where: {
+    	            'phone':$('#phone').val(),
+    	            'status': $('#status').val()
+    	        }
+    	      });
+        	layer.close(index);
+       });
+        
+      //监听工具条
+        table.on('tool(tool1)', function(obj){ //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+          var data = obj.data //获得当前行数据
+          ,layEvent = obj.event; //获得 lay-event 对应的值
+          if(layEvent === 'detail'){
+            //alert(JSON.stringify(data));
+          } else if(layEvent === 'edit'){
+          } else if(layEvent === 'del'){
+        	  layer.confirm('认真的吗', function(index){
+                  $.post('[[@{/admin/agent/updateStatus.html}]]',{'id':data.id,'status':data.status},function(data){
+                	  layer.close(index);
+                	  if(data.code==0)
+                	  {
+                		  table.reload('table1', {
+                  	        page: {
+                  	          curr: 1 //重新从第 1 页开始
+                  	        }
+                  	        ,where: {
+                  	        	'phone':$('#phone').val(),
+                	            'status': $('#status').val()
+                  	        }
+                  	      });
+                	  }
+                	  else
+                	  {
+                		  layer.msg('修改失败');
+                	  }
+                  })
+                  //向服务端发送删除指令
+                });
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
